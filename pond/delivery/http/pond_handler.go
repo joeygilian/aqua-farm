@@ -4,22 +4,21 @@ import (
 	"net/http"
 	"strconv"
 
-	farmUsecase "github.com/aqua-farm/farm/usecase"
-
 	"github.com/aqua-farm/farm"
+	pondUsecase "github.com/aqua-farm/pond/usecase"
 	"github.com/labstack/echo"
 )
 
-type FarmHandler struct {
-	farmUsecase farmUsecase.FarmUsecase
+type PondHandler struct {
+	pondUsecase pondUsecase.PondUsecase
 }
 
-func NewFarmHandler(e *echo.Echo, fu farmUsecase.FarmUsecase) {
-	handler := &FarmHandler{farmUsecase: fu}
-	e.GET("/farm", handler.FetchFarm)
+func NewPondHandler(e *echo.Echo, pu pondUsecase.PondUsecase) {
+	handler := &PondHandler{pondUsecase: pu}
+	e.GET("/pond", handler.FetchPond)
 }
 
-func (fh *FarmHandler) FetchFarm(c echo.Context) error {
+func (fh *PondHandler) FetchPond(c echo.Context) error {
 	numS := c.QueryParam("num")
 	num, _ := strconv.Atoi(numS)
 
@@ -28,7 +27,7 @@ func (fh *FarmHandler) FetchFarm(c echo.Context) error {
 
 	// cursor := c.QueryParam("cursor")
 
-	listAr, nextCursor, err := fh.farmUsecase.Fetch(int64(cursor), int64(num))
+	listAr, nextCursor, err := fh.pondUsecase.Fetch(int64(cursor), int64(num))
 
 	if err != nil {
 		return c.JSON(getStatusCode(err), err.Error())

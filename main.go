@@ -7,6 +7,8 @@ import (
 
 	_middleware "github.com/aqua-farm/config/middleware"
 	httpDeliver "github.com/aqua-farm/farm/delivery/http"
+	farmRepo "github.com/aqua-farm/farm/repository"
+	farmUsecase "github.com/aqua-farm/farm/usecase"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -61,7 +63,11 @@ func main() {
 		AllowMethods: []string{echo.DELETE, echo.PATCH, echo.PUT},
 	}))
 
-	httpDeliver.NewFarmHandler(e)
+	farmRepo := farmRepo.NewPostgresqlFarmRepository(dbConn)
+
+	farmUsecase := farmUsecase.NewFarmUsecase(farmRepo)
+
+	httpDeliver.NewFarmHandler(e, farmUsecase)
 
 	// gasPriceRepo := postgresql.NewPostgresqlGasPriceRepository(dbConn)
 
