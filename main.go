@@ -9,6 +9,7 @@ import (
 	httpDeliver "github.com/aqua-farm/farm/delivery/http"
 	farmRepo "github.com/aqua-farm/farm/repository"
 	farmUsecase "github.com/aqua-farm/farm/usecase"
+	pondRepo "github.com/aqua-farm/pond/repository"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -64,8 +65,9 @@ func main() {
 	}))
 
 	farmRepo := farmRepo.NewPostgresqlFarmRepository(dbConn)
+	pondRepo := pondRepo.NewPostgresqlPondRepository(dbConn)
 
-	farmUsecase := farmUsecase.NewFarmUsecase(farmRepo)
+	farmUsecase := farmUsecase.NewFarmUsecase(farmRepo, pondRepo)
 
 	httpDeliver.NewFarmHandler(e, farmUsecase)
 

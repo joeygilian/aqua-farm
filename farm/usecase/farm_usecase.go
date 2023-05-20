@@ -3,6 +3,7 @@ package usecase
 import (
 	"github.com/aqua-farm/farm"
 	"github.com/aqua-farm/farm/repository"
+	pondRepo "github.com/aqua-farm/pond/repository"
 	"github.com/labstack/gommon/log"
 )
 
@@ -15,10 +16,11 @@ type FarmUsecase interface {
 
 type farmUsecase struct {
 	farmRepo repository.FarmRepository
+	pondRepo pondRepo.PondRepository
 }
 
-func NewFarmUsecase(farmRepo repository.FarmRepository) FarmUsecase {
-	return &farmUsecase{farmRepo: farmRepo}
+func NewFarmUsecase(farmRepo repository.FarmRepository, pondRepo pondRepo.PondRepository) FarmUsecase {
+	return &farmUsecase{farmRepo: farmRepo, pondRepo: pondRepo}
 }
 
 func (f *farmUsecase) Fetch() ([]*farm.Farm, error) {
@@ -26,6 +28,14 @@ func (f *farmUsecase) Fetch() ([]*farm.Farm, error) {
 	listFarm, err := f.farmRepo.Fetch()
 	if err != nil {
 		return nil, err
+	}
+
+	for idx, farm := range listFarm {
+		pond, err := f.pondRepo.GetByFarmID(farm.ID)
+		if err != nil {
+			return nil, err
+		}
+		listFarm[idx].Pond = pond
 	}
 
 	return listFarm, nil

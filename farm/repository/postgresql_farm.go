@@ -43,7 +43,7 @@ func (p *postgresqlFarmRepository) fetch(query string, args ...interface{}) ([]*
 }
 
 func (p *postgresqlFarmRepository) Fetch() ([]*models.Farm, error) {
-	query := `SELECT id,name FROM farm`
+	query := `SELECT id,name FROM farm where status = true`
 
 	return p.fetch(query)
 
@@ -51,7 +51,7 @@ func (p *postgresqlFarmRepository) Fetch() ([]*models.Farm, error) {
 
 func (p *postgresqlFarmRepository) GetByID(id int64) (*models.Farm, error) {
 	query := `SELECT id, name
-  						FROM farm WHERE id = $1`
+  						FROM farm WHERE id = $1 and status = true`
 
 	a := &models.Farm{}
 	err := p.Conn.QueryRow(query, id).Scan(&a.ID, &a.Name)
@@ -64,7 +64,7 @@ func (p *postgresqlFarmRepository) GetByID(id int64) (*models.Farm, error) {
 }
 
 func (p *postgresqlFarmRepository) GetByName(name string) (*models.Farm, error) {
-	query := `SELECT id, name FROM farm WHERE name = $1`
+	query := `SELECT id, name FROM farm WHERE name = $1 and status = true`
 
 	a := &models.Farm{}
 	err := p.Conn.QueryRow(query, name).Scan(&a.ID, &a.Name)
@@ -87,7 +87,7 @@ func (p *postgresqlFarmRepository) Store(f *models.Farm) (int64, error) {
 
 func (p *postgresqlFarmRepository) Update(f *models.Farm) (*models.Farm, error) {
 
-	_, err := p.Conn.Exec("UPDATE farm SET name=$2 WHERE id=$1", f.ID, f.Name)
+	_, err := p.Conn.Exec("UPDATE farm SET name=$2, updated_date = now() WHERE id=$1", f.ID, f.Name)
 	if err != nil {
 		return nil, err
 	}
