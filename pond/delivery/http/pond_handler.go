@@ -2,11 +2,13 @@ package http
 
 import (
 	"net/http"
-	"strconv"
+	"sync/atomic"
 
 	"github.com/aqua-farm/farm"
+	"github.com/aqua-farm/pond"
 	pondUsecase "github.com/aqua-farm/pond/usecase"
 	"github.com/labstack/echo"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
 type PondHandler struct {
@@ -16,26 +18,88 @@ type PondHandler struct {
 func NewPondHandler(e *echo.Echo, pu pondUsecase.PondUsecase) {
 	handler := &PondHandler{pondUsecase: pu}
 	e.GET("/pond", handler.FetchPond)
+	e.POST("/pond", handler.Store)
 }
 
-func (fh *PondHandler) FetchPond(c echo.Context) error {
-	numS := c.QueryParam("num")
-	num, _ := strconv.Atoi(numS)
+// variable for counting how many fetchFarm API is called
+var fetchPondCounter int64
 
-	cursorS := c.QueryParam("cursor")
-	cursor, _ := strconv.Atoi(cursorS)
+// Handler for fetching all pond
+func (ph *PondHandler) FetchPond(c echo.Context) error {
 
-	// cursor := c.QueryParam("cursor")
+	atomic.AddInt64(&fetchPondCounter, 1)
 
-	listAr, nextCursor, err := fh.pondUsecase.Fetch(int64(cursor), int64(num))
+	uniqueUserAgents := make(map[string]int)
+
+	userAgent := c.Request().Header.Get("User-Agent")
+
+	if uniqueUserAgents[userAgent] == 0 {
+		uniqueUserAgents[userAgent]++
+	}
+
+	count := atomic.LoadInt64(&fetchPondCounter)
+
+	listAr, err := ph.pondUsecase.Fetch()
 
 	if err != nil {
 		return c.JSON(getStatusCode(err), err.Error())
 	}
-	c.Response().Header().Set(`X-Cursor`, nextCursor)
-	return c.JSON(http.StatusOK, listAr)
 
-	// return c.JSON(http.StatusOK, "HEHE")
+	response := Response{
+		Count:           count,
+		UniqueUserAgent: uniqueUserAgents[userAgent],
+		Data:            listAr,
+	}
+
+	return c.JSON(http.StatusOK, response)
+}
+
+// handler for Storing Farm
+func (ph *PondHandler) Store(c echo.Context) (err error) {
+	var pond pond.Pond
+	err = c.Bind(&pond)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	var ok bool
+	if ok, err = isRequestValid(&pond); !ok {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	res, err := ph.pondUsecase.Store(&pond)
+	if err != nil {
+		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, res)
+}
+
+// Handler for farm Update
+func (ph *PondHandler) Update(c echo.Context) (err error) {
+	var pond pond.Pond
+	err = c.Bind(&pond)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	var ok bool
+	if ok, err = isRequestValid(&pond); !ok {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	res, err := ph.pondUsecase.Update(&pond)
+	if err != nil {
+		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, res)
+}
+
+type Response struct {
+	Count           int64 `json:"count"`
+	UniqueUserAgent int   `json:"unique_user_agent"`
+	Data            []*pond.Pond
 }
 
 type ResponseError struct {
@@ -57,4 +121,13 @@ func getStatusCode(err error) int {
 	default:
 		return http.StatusInternalServerError
 	}
+}
+
+func isRequestValid(m *pond.Pond) (bool, error) {
+	validate := validator.New()
+	err := validate.Struct(m)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
