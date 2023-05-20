@@ -20,6 +20,7 @@ func NewFarmHandler(e *echo.Echo, fu farmUsecase.FarmUsecase) {
 	e.GET("/farm", handler.FetchFarm)
 	e.POST("/farm", handler.Store)
 	e.PUT("/farm", handler.Update)
+	e.DELETE("/farm", handler.Delete)
 }
 
 // variable for counting how many fetchFarm API is called
@@ -89,6 +90,21 @@ func (fh *FarmHandler) Update(c echo.Context) (err error) {
 	}
 
 	res, err := fh.farmUsecase.Update(&farm)
+	if err != nil {
+		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, res)
+}
+
+func (fh *FarmHandler) Delete(c echo.Context) (err error) {
+	var farm farm.Farm
+	err = c.Bind(&farm)
+	if err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, err.Error())
+	}
+
+	res, err := fh.farmUsecase.Delete(farm.ID)
 	if err != nil {
 		return c.JSON(getStatusCode(err), ResponseError{Message: err.Error()})
 	}

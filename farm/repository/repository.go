@@ -8,4 +8,5 @@ type FarmRepository interface {
 	GetByName(name string) (*models.Farm, error)
 	Store(f *models.Farm) (int64, error)
 	Update(f *models.Farm) (*models.Farm, error)
+	Delete(id int64) (int64, error)
 }

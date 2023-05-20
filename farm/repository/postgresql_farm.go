@@ -94,3 +94,13 @@ func (p *postgresqlFarmRepository) Update(f *models.Farm) (*models.Farm, error) 
 
 	return f, nil
 }
+
+func (p *postgresqlFarmRepository) Delete(id int64) (int64, error) {
+
+	_, err := p.Conn.Exec("UPDATE farm SET status=false, deleted_date = now() WHERE id=$1", id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}

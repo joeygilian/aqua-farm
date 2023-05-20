@@ -5,6 +5,7 @@ import (
 	farmUsecase "github.com/aqua-farm/farm/usecase"
 	"github.com/aqua-farm/pond"
 	"github.com/aqua-farm/pond/repository"
+	"github.com/labstack/gommon/log"
 )
 
 type PondUsecase interface {
@@ -24,6 +25,8 @@ func NewPondUsecase(pondRepo repository.PondRepository, farmUsecase farmUsecase.
 
 // usecase for fetching all existing ponds
 func (p *pondUsecase) Fetch() ([]*pond.Pond, error) {
+
+	log.Info("masuk")
 	listPond, err := p.pondRepo.Fetch()
 	if err != nil {
 		return nil, err

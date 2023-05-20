@@ -8,6 +8,7 @@ import (
 	"github.com/aqua-farm/pond"
 	pondUsecase "github.com/aqua-farm/pond/usecase"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	validator "gopkg.in/go-playground/validator.v9"
 )
 
@@ -19,6 +20,7 @@ func NewPondHandler(e *echo.Echo, pu pondUsecase.PondUsecase) {
 	handler := &PondHandler{pondUsecase: pu}
 	e.GET("/pond", handler.FetchPond)
 	e.POST("/pond", handler.Store)
+
 }
 
 // variable for counting how many fetchFarm API is called
@@ -27,6 +29,7 @@ var fetchPondCounter int64
 // Handler for fetching all pond
 func (ph *PondHandler) FetchPond(c echo.Context) error {
 
+	log.Info("masuk")
 	atomic.AddInt64(&fetchPondCounter, 1)
 
 	uniqueUserAgents := make(map[string]int)

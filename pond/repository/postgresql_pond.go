@@ -58,7 +58,7 @@ func (m *postgresqlPondRepository) fetch(query string, args ...interface{}) ([]*
 func (p *postgresqlPondRepository) Fetch() ([]*models.Pond, error) {
 
 	query := `SELECT id, farm_id ,name FROM pond where status = true`
-
+	log.Info("masuk")
 	return p.fetch(query)
 }
 

@@ -12,6 +12,7 @@ type FarmUsecase interface {
 	GetByID(id int64) (*farm.Farm, error)
 	Store(f *farm.Farm) (*farm.Farm, error)
 	Update(f *farm.Farm) (*farm.Farm, error)
+	Delete(id int64) (int64, error)
 }
 
 type farmUsecase struct {
@@ -78,6 +79,22 @@ func (fu *farmUsecase) Update(f *farm.Farm) (*farm.Farm, error) {
 	res, err := fu.farmRepo.Update(f)
 	if err != nil {
 		return nil, err
+	}
+
+	return res, nil
+}
+
+func (fu *farmUsecase) Delete(id int64) (int64, error) {
+
+	existedFarm, _ := fu.farmRepo.GetByID(id)
+	if existedFarm == nil {
+		return 0, farm.ErrNotFound
+	}
+	log.Info(existedFarm)
+
+	res, err := fu.farmRepo.Delete(id)
+	if err != nil {
+		return 0, err
 	}
 
 	return res, nil

@@ -7,9 +7,12 @@ import (
 
 	_middleware "github.com/aqua-farm/config/middleware"
 	httpDeliver "github.com/aqua-farm/farm/delivery/http"
+
 	farmRepo "github.com/aqua-farm/farm/repository"
 	farmUsecase "github.com/aqua-farm/farm/usecase"
+	httpPondDeliver "github.com/aqua-farm/pond/delivery/http"
 	pondRepo "github.com/aqua-farm/pond/repository"
+	pondUsecase "github.com/aqua-farm/pond/usecase"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 
@@ -68,14 +71,10 @@ func main() {
 	pondRepo := pondRepo.NewPostgresqlPondRepository(dbConn)
 
 	farmUsecase := farmUsecase.NewFarmUsecase(farmRepo, pondRepo)
+	pondUsecase := pondUsecase.NewPondUsecase(pondRepo, farmUsecase)
 
 	httpDeliver.NewFarmHandler(e, farmUsecase)
-
-	// gasPriceRepo := postgresql.NewPostgresqlGasPriceRepository(dbConn)
-
-	// timeoutContext := time.Duration(viper.GetInt("context.timeout")) * time.Second
-	// gpu := usecase.NewGasPriceUsecase(gasPriceRepo, timeoutContext)
-	// _gpHandler.NewGasPriceHandler(e, gpu)
+	httpPondDeliver.NewPondHandler(e, pondUsecase)
 
 	log.Fatal(e.Start(viper.GetString("server.address"))) //nolint
 }
